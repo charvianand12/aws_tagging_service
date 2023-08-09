@@ -111,7 +111,7 @@ for account in accounts:
                             if fetched_key.startswith("trhc:") or fetched_key.startswith("accenture"):
                                 fetched_key=tag['Key'].lower()
                             else:
-                                fetched_key="trhc:" + tag['Key'].lower()
+                                fetched_key="trhc:" + fetched_key.lower()
                             
                             for sp_char in sp_chars:
                                 if sp_char in fetched_key:
