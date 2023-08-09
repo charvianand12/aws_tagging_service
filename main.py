@@ -53,6 +53,7 @@ def check_spelling(input_item):
     
     for item in valid_keys:
         similarity = fuzz.partial_ratio(input_item, item)
+        print(similarity)
         if similarity == 100:
             # print("spelling matched",input_item)
             return item  
@@ -70,7 +71,7 @@ for tag in tags:
     
     print(tag['Key'])
     if re.match(key_pattern, tag['Key']) and " " not in tag['Key']:
-        # print("pattern matched")
+        print("pattern matched")
         correct_key = check_spelling(tag['Key'])
         tag['Key'] = correct_key
     else:
@@ -87,6 +88,9 @@ for tag in tags:
                     tag['Key']=tag['Key'].replace(sp_char,"")
                 else:
                     tag['Key']=tag['Key'].replace(sp_char,"-")
+            
+        correct_key = check_spelling(tag['Key'])
+        tag['Key'] = correct_key
 
                             
         
