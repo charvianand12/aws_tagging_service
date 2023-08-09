@@ -1,6 +1,9 @@
 import boto3
 import re
 from rapidfuzz import fuzz, process
+from dotenv import load_dotenv
+
+load_dotenv()
 
 valid_keys = ["trhc:name",
               "trhc:asset-source",
@@ -33,8 +36,6 @@ valid_keys = ["trhc:name",
               ]
 
 session = boto3.Session(
-    aws_access_key_id='',
-    aws_secret_access_key='',
     region_name='us-east-2'
 )
 
@@ -52,24 +53,25 @@ tags = response['Tags']
 
 def check_spelling(input_item):
     
-    best_match = list(process.extractOne(input_item, valid_keys, scorer=fuzz.partial_ratio))
-   
-    if int(best_match[1])>= 85:
-        # print(best_match[1])
-        return(best_match[0])
+    best_match = list(process.extractOne(input_item, valid_keys, scorer=fuzz.ratio))
+    print(best_match)
+    match_string = None
+    if int(best_match[1])>= 79:
+         match_string = best_match[0]
     else:
-        # print(best_match[1])
-        return(input_item)
+        match_string = (input_item)
+    print(best_match[1])
+    return match_string
             
             
 for tag in tags:
     
     print(tag['Key'])
     if re.match(key_pattern, tag['Key']) and " " not in tag['Key']:
-        # print("pattern matched")
-        pass
+        print("pattern matched")
+        # pass
     else:
-        # print("pattern not matched")
+        print("pattern not matched")
         tag['Key'] = tag['Key'].strip()
         if tag['Key'].startswith("trhc:") or tag['Key'].startswith("accenture"):
             tag['Key']=tag['Key'].lower()
