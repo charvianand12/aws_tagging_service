@@ -104,27 +104,33 @@ for account in accounts:
                         # print(tag['Key'])
                         if re.match(key_pattern, tag['Key']) and " " not in tag['Key']:
                             # print("pattern matched")
-                            pass
+                            fetched_key = tag['Key']
                         else:
                             # print("pattern not matched")
-                            tag['Key'] = tag['Key'].strip()
-                            if tag['Key'].startswith("trhc:") or tag['Key'].startswith("accenture"):
-                                tag['Key']=tag['Key'].lower()
+                            fetched_key = tag['Key'].strip()
+                            if fetched_key.startswith("trhc:") or fetched_key.startswith("accenture"):
+                                fetched_key=tag['Key'].lower()
                             else:
-                                tag['Key']="trhc:" + tag['Key'].lower()
+                                fetched_key="trhc:" + tag['Key'].lower()
                             
                             for sp_char in sp_chars:
-                                if sp_char in tag['Key']:
-                                    if tag['Key'].startswith(sp_char) or tag['Key'].endswith(sp_char):
-                                        tag['Key']=tag['Key'].replace(sp_char,"")
+                                if sp_char in fetched_key:
+                                    if fetched_key.startswith(sp_char) or fetched_key.endswith(sp_char):
+                                        fetched_key=fetched_key.replace(sp_char,"")
                                     else:
-                                        tag['Key']=tag['Key'].replace(sp_char,"-")
+                                        fetched_key=fetched_key.replace(sp_char,"-")
                                 
                         
                         # print(tag['Key'])
                         
-                        correct_key = check_spelling(tag['Key'])
-                        tag['Key'] = correct_key
-                        print(tag['Key'])
+                        correct_key = check_spelling(fetched_key)
+                        # tag['Key'] = correct_key
+                        
+                        if correct_key != tag['Key']:
+                            ec2_client.delete_tags(Resources=[instance_id], Tags=[{'Key': tag['Key']}])
+                            ec2_client.create_tags(Resources=[instance_id], Tags=[{'Key': correct_key, 'Value': tag['Value']}])
+                        
+                            print("modified")
+                        print(tag['Key'],"...................................",fetched_key)
                         print("\n\n")
                         
