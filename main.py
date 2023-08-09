@@ -65,9 +65,8 @@ for tag in tags:
     
     print(tag['Key'])
     if re.match(key_pattern, tag['Key']) and " " not in tag['Key']:
-        print("pattern matched")
-        # correct_key = check_spelling(tag['Key'])
-        # tag['Key'] = correct_key
+        # print("pattern matched")
+        pass
     else:
         # print("pattern not matched")
         tag['Key'] = tag['Key'].strip()
