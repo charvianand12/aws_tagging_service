@@ -1,6 +1,6 @@
 import boto3
 import re
-from rapidfuzz import fuzz
+from rapidfuzz import fuzz, process
 
 valid_keys = ["trhc:name",
               "trhc:asset-source",
@@ -51,19 +51,14 @@ tags = response['Tags']
 
 def check_spelling(input_item):
     
-    for item in valid_keys:
-        # print(item,"____________________",input_item)
-        similarity = fuzz.partial_ratio(input_item, item)
-        # print(similarity)
-        if similarity >= 80:
-            # print("spelling matched",input_item)
-            return item    
-        # if similarity < 80:
-        #     # print("spelling matched 80%",input_item) 
-        #     return input_item
-        # else:
-        #     return input_item
-    
+    best_match = list(process.extractOne(input_item, valid_keys, scorer=fuzz.partial_ratio))
+   
+    if int(best_match[1])>= 85:
+        # print(best_match[1])
+        return(best_match[0])
+    else:
+        # print(best_match[1])
+        return(input_item)
             
             
 for tag in tags:
@@ -89,7 +84,7 @@ for tag in tags:
                     tag['Key']=tag['Key'].replace(sp_char,"-")
             
        
-    print(tag['Key'])
+    # print(tag['Key'])
     
     correct_key = check_spelling(tag['Key'])
     tag['Key'] = correct_key
