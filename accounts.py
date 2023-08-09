@@ -53,13 +53,13 @@ for account in accounts:
         
         # Retrieve resources with tags in the region
         resources = tagging_client.get_resources(
-            ResourceTypeFilters=['ec2:instance'],  # Specify the resource types you want to validate
-            TagFilters=[
-                {'Key': 'your_tag_key'}  # Specify your tag key
-            ],
+            # ResourceTypeFilters=['ec2:instance'],  # Specify the resource types you want to validate
+            # TagFilters=[
+            #     {'Key': 'your_tag_key'}  # Specify your tag key
+            # ],
             ResourcesPerPage=50  # Adjust the pagination if needed
         )['ResourceTagMappingList']
-        
+        print(resources)
         # Iterate through each resource
         for resource in resources:
             resource_arn = resource['ResourceARN']
