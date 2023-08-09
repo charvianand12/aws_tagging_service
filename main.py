@@ -33,8 +33,8 @@ valid_keys = ["trhc:name",
               ]
 
 session = boto3.Session(
-    aws_access_key_id='AKIAW4SH52FNCLSX34OS',
-    aws_secret_access_key='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',
+    aws_access_key_id='',
+    aws_secret_access_key='',
     region_name='us-east-2'
 )
 
