@@ -42,6 +42,7 @@ ec_client = session.client('ec2')
 
 instance_id = 'i-04509bea26414d392'
 key_pattern = r'^trhc:[a-z][a-z0-9:/.-]*$'
+# key_pattern = r'^[a-z][a-z0-9:/.-]*$'
 sp_chars = ["_"," ","&"]
 
 # response = ec2_client.describe_tags(Filters=[{'Name': 'resource-id', 'Values': [instance_id]}])
@@ -70,7 +71,7 @@ for tag in tags:
     else:
         # print("pattern not matched")
         tag['Key'] = tag['Key'].strip()
-        if tag['Key'].startswith("thrc:") or tag['Key'].startswith("accenture"):
+        if tag['Key'].startswith("trhc:") or tag['Key'].startswith("accenture"):
             tag['Key']=tag['Key'].lower()
         else:
             tag['Key']="trhc:" + tag['Key'].lower()
