@@ -1,6 +1,6 @@
 from rapidfuzz import fuzz, process
-from textblob import TextBlob
-from spellchecker import SpellChecker
+# from textblob import TextBlob
+# from spellchecker import SpellChecker
 from valid_keys import valid_keys
 
 
