@@ -85,5 +85,5 @@ for account in accounts:
                                 ResourceARNList=[resource_arn], Tags=new_tags
                             )
                             print("\n    Resource ARN:",resource_arn)
-                            print("\n    Old Key:",tag_key, "\n    New Tag:",new_tags,"\n")
+                            print("\n    Old Key:",tag_key,"     Old Value:",tag_value, "\n    New Tag:",new_tags,"\n")
                             print("    tag modified\n\n")

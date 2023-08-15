@@ -10,7 +10,7 @@ def check_spelling(input_item):
     best_match = list(process.extractOne(input_item, valid_keys, scorer=fuzz.ratio))
     # print(best_match)
     match_string = None
-    if int(best_match[1])>= 79:
+    if int(best_match[1])>= 85:
         match_string = best_match[0]
     else:
         text = input_item[5:]
@@ -76,27 +76,28 @@ def validate_tag_value(tag_value,tag_key):
 
     if ("@" in fetched_value) or (any(char.isdigit() for char in fetched_value)):
         correct_value = fetched_value
-        # print(correct_value)
+
     elif ("_" in fetched_value):
         correct_value = fetched_value.replace("_","-")
-        # print(correct_value)
+        correct_value = correct_value.lower()
+
     elif (tag_key == "trhc:creation-ticket") or (tag_key == "trhc:initiative-epic"):
         correct_value = fetched_value
-        # print(correct_value)
+   
     else:
         fetched_value = fetched_value.lower()
         if tag_key == "trhc:criticality":
             best_match = list(process.extractOne(fetched_value, criticality_list, scorer=fuzz.ratio))
             correct_value = best_match[0]
-            print(correct_value)
+ 
         elif tag_key == "trhc:idle-shutdown":
             best_match = list(process.extractOne(fetched_value, idle_list, scorer=fuzz.ratio))
             correct_value = best_match[0]
-            # print(correct_value)
+
         elif tag_key == "trhc:stage":
             best_match = list(process.extractOne(fetched_value, stage_list, scorer=fuzz.ratio))
             correct_value = best_match[0]
-            # print(correct_value)
+
         else:
             correct_value = fetched_value.lower()
             
