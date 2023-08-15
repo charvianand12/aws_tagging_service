@@ -43,45 +43,47 @@ for account in accounts:
                 )
             else:
                 client = session.client("resourcegroupstaggingapi", region_name=region)
+
             response = client.get_resources(
-                # PaginationToken='',
-                TagFilters=[],
-                # ResourcesPerPage=1,
-                # TagsPerPage=3,
-                # ResourceTypeFilters=[
-                #     resource_type,
-                # ],
-                IncludeComplianceDetails=True,
-                ExcludeCompliantResources=False,
-                # ResourceARNList=[
-                #     'ec2','rds','s3'
-                # ]
-            )
-            # paginator = client.get_paginator('get_resources')
-            # resources_iterator = paginator.paginate()
-            # for page in resources_iterator:
-                # resources = page["ResourceTagMappingList"]
-            resources = response["ResourceTagMappingList"]
-            for resource in resources:
-                resource_arn = resource["ResourceARN"]
-                resource_tags = resource["Tags"]
-                for resource_tag in resource_tags:
-                    tag_key = resource_tag["Key"]
-                    tag_value = resource_tag["Value"]
-                    correct_key = validate_tag_key(tag_key)
-                    correct_value = validate_tag_value(tag_value, correct_key)
-                    new_tags = {correct_key: correct_value}
-                    
-                    if (tag_key != correct_key) or (tag_value != correct_value):
-                        response = client.untag_resources(
-                            ResourceARNList=[resource_arn],
-                            TagKeys=[
-                                tag_key,
-                            ],
-                        )
-                        response = client.tag_resources(
-                            ResourceARNList=[resource_arn], Tags=new_tags
-                        )
-                        print("\n    Resource ARN:",resource_arn)
-                        print("\n    Old Key:",tag_key, "\n    New Tag:",new_tags,"\n")
-                        print("    tag modified\n\n")
+                        # PaginationToken='',
+                        TagFilters=[],
+                        ResourcesPerPage=1,
+                        IncludeComplianceDetails=True,
+                        ExcludeCompliantResources=False,
+                    )
+            resources_list=response["ResourceTagMappingList"]
+            if len(resources_list) > 0:
+                pagination_token=response["PaginationToken"]
+                while pagination_token != "":
+                    response = client.get_resources(
+                        PaginationToken=pagination_token,
+                        TagFilters=[],
+                        ResourcesPerPage=1,
+                        IncludeComplianceDetails=True,
+                        ExcludeCompliantResources=False,
+                    )
+                    pagination_token=response["PaginationToken"]
+                    resources_list = resources_list + (response["ResourceTagMappingList"])
+                for resource in resources_list:
+                    resource_arn = resource["ResourceARN"]
+                    resource_tags = resource["Tags"]
+                    for resource_tag in resource_tags:
+                        tag_key = resource_tag["Key"]
+                        tag_value = resource_tag["Value"]
+                        correct_key = validate_tag_key(tag_key)
+                        correct_value = validate_tag_value(tag_value, correct_key)
+                        new_tags = {correct_key: correct_value}
+                        
+                        if (tag_key != correct_key) or (tag_value != correct_value):
+                            response = client.untag_resources(
+                                ResourceARNList=[resource_arn],
+                                TagKeys=[
+                                    tag_key,
+                                ],
+                            )
+                            response = client.tag_resources(
+                                ResourceARNList=[resource_arn], Tags=new_tags
+                            )
+                            print("\n    Resource ARN:",resource_arn)
+                            print("\n    Old Key:",tag_key, "\n    New Tag:",new_tags,"\n")
+                            print("    tag modified\n\n")
