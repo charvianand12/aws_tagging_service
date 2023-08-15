@@ -69,10 +69,10 @@ for account in accounts:
                     tag_key = resource_tag["Key"]
                     tag_value = resource_tag["Value"]
                     correct_key = validate_tag_key(tag_key)
-                    correct_value = tag_value
+                    correct_value = validate_tag_value(tag_value, correct_key)
                     new_tags = {correct_key: correct_value}
                     
-                    if tag_key != correct_key:
+                    if (tag_key != correct_key) or (tag_value != correct_value):
                         response = client.untag_resources(
                             ResourceARNList=[resource_arn],
                             TagKeys=[
