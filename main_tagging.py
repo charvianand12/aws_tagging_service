@@ -1,136 +1,82 @@
 import boto3
+from credentials import get_aws_credentials
 from dotenv import load_dotenv
-import re
-from rapidfuzz import fuzz, process
-
-
+from validations import validate_tag_key, validate_tag_value
 
 load_dotenv()
-valid_keys = ["trhc:name",
-              "trhc:asset-source",
-              "trhc:creation-ticket",
-              "trhc:criticality", 
-              "trhc:contact-name",
-              "trhc:administrator",
-              "trhc:business-unit",
-              "trhc:product-name",
-              "trhc:customer",
-              "trhc:data-security-level",
-              "trhc:team",
-              "trhc:data-privacy-level",
-              "trhc:idle-shutdown",
-              "trhc:after-hours-shutdown",
-              "trhc:workday-auto-start",
-              "trhc:backup-policy",
-              "trhc:retention-policy",
-              "trhc:finance:component",
-              "trhc:finance:rev-center",
-              "trhc:initiative-epic",
-              "trhc:stage",
-              "trhc:hostname",
-              "trhc:delete-after",
-              "trhc:maintenance-window",
-              "trhc:durable",
-              "trhc:project",
-              "trhc:role",
-              "accenture"
-              ]
 
-# Initialize AWS clients
-session = boto3.Session(
-    region_name='us-east-2'
-)
-def list_resources_in_region(region, account_id):
-    ec2_client = boto3.client('ec2', region_name=region)
-    instance_id_list = []
-    instances = ec2_client.describe_instances()
-    # print(instances)
-    for reservation in instances['Reservations']:
-        # print(reservation)
-        for instance in reservation['Instances']:
-            print(f"Account: {account_id}, Region: {region}, Instance ID: {instance['InstanceId']}")
-            instance_id_list.append(instance['InstanceId'])
-            return instance_id_list
- 
-def check_spelling(input_item):
-        
-    best_match = list(process.extractOne(input_item, valid_keys, scorer=fuzz.ratio))
-    print(best_match)
-    match_string = None
-    if int(best_match[1])>= 79:
-        match_string = best_match[0]
-    else:
-        match_string = (input_item)
-    # print(best_match[1])
-    return match_string
- 
-           
-organizations_client = session.client('organizations')
-resource_groups_tagging_api_client = session.client('resourcegroupstaggingapi')
+
+accounts_id = []
+regions = ["us-west-2", "us-west-1", "us-east-2", "us-east-1"]
+session = boto3.Session(region_name="us-east-2")
+organizations_client = session.client("organizations")
+response = organizations_client.describe_organization()
+organization_details = response["Organization"]
 
 # Retrieve accounts in your AWS organization
 response = organizations_client.list_accounts()
-accounts = response['Accounts']
+accounts = response["Accounts"]
+master_account_id = organization_details["MasterAccountId"]
+
 
 # Iterate through each account
 for account in accounts:
-    account_id = account['Id']
-    print(f"Processing Account: {account_id}")
-    tagging_client = session.client('resourcegroupstaggingapi')
-    
-    # Retrieve regions for the account
-    ec2_client = session.client('ec2')
-    regions = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
-    
-    # Iterate through each region
-    for region in regions:
-        print(f"  Processing Region: {region}")
-        instance_id_list = list_resources_in_region(region, account_id)
-        if instance_id_list is not None:
-            for instance_id in instance_id_list:
-                print(f"  Processing Instance: {instance_id}")
-        # instance_id = 'i-04509bea26414d392'
-                key_pattern = r'^trhc:[a-z][a-z0-9:/.-]*$'
-                # key_pattern = r'^[a-z][a-z0-9:/.-]*$'
-                sp_chars = ["_"," ","&"]
+    account_id = account["Id"]
+    role_name = "admin_role"  # replace "admin_role" with your role_name
+    print("\nProcessing account:__________", account_id, "\n")
+    if len(accounts_id) == 0 or (len(accounts_id) > 0 and (account_id in accounts_id)):
+        if account_id != master_account_id:
+            access_key, secret_key, session_token = get_aws_credentials(
+                account_id, role_name
+            )
 
-                # response = ec2_client.describe_tags(Filters=[{'Name': 'resource-id', 'Values': [instance_id]}])
-                response = ec2_client.describe_tags(Filters=[{'Name': 'resource-id', 'Values': [instance_id]}])
-
-                tags = response['Tags']
-                if tags is not None:
-                    for tag in tags:
-                        
-                        # print(tag['Key'])
-                        if re.match(key_pattern, tag['Key']) and " " not in tag['Key']:
-                            # print("pattern matched")
-                            fetched_key = tag['Key']
-                        else:
-                            # print("pattern not matched")
-                            fetched_key = tag['Key'].strip()
-                            if fetched_key.startswith("trhc:") or fetched_key.startswith("accenture"):
-                                fetched_key=tag['Key'].lower()
-                            else:
-                                fetched_key="trhc:" + fetched_key.lower()
-                            
-                            for sp_char in sp_chars:
-                                if sp_char in fetched_key:
-                                    if fetched_key.startswith(sp_char) or fetched_key.endswith(sp_char):
-                                        fetched_key=fetched_key.replace(sp_char,"")
-                                    else:
-                                        fetched_key=fetched_key.replace(sp_char,"-")
-                                
-                        
-                        # print(tag['Key'])
-                        
-                        correct_key = check_spelling(fetched_key)
-                        # tag['Key'] = correct_key
-                        
-                        if correct_key != tag['Key']:
-                            ec2_client.delete_tags(Resources=[instance_id], Tags=[{'Key': tag['Key']}])
-                            ec2_client.create_tags(Resources=[instance_id], Tags=[{'Key': correct_key, 'Value': tag['Value']}])
-                        
-                            print("modified")
-                        print(tag['Key'],"...................................",fetched_key)
-                        print("\n\n")
-                        
+        # Iterate through each region
+        for region in regions:
+            print("Processing region     ", region)
+            if account_id != master_account_id:
+                client = session.client(
+                    "resourcegroupstaggingapi",
+                    region_name=region,
+                    aws_access_key_id=access_key,
+                    aws_secret_access_key=secret_key,
+                    aws_session_token=session_token,
+                )
+            else:
+                client = session.client("resourcegroupstaggingapi", region_name=region)
+            response = client.get_resources(
+                # PaginationToken='string',
+                TagFilters=[],
+                # ResourcesPerPage=3,
+                # TagsPerPage=3,
+                # ResourceTypeFilters=[
+                #     resource_type,
+                # ],
+                IncludeComplianceDetails=True,
+                ExcludeCompliantResources=False,
+                # ResourceARNList=[
+                #     'ec2','rds','s3'
+                # ]
+            )
+            resources = response["ResourceTagMappingList"]
+            for resource in resources:
+                resource_arn = resource["ResourceARN"]
+                resource_tags = resource["Tags"]
+                print(resource_arn)
+                for resource_tag in resource_tags:
+                    print("Processing resource     ", resource)
+                    tag_key = resource_tag["Key"]
+                    tag_value = resource_tag["Value"]
+                    correct_key = validate_tag_key(tag_key)
+                    correct_value = tag_value
+                    new_tags = {correct_key: correct_value}
+                    print("old key : ", tag_key, "\n new tag:", new_tags, "\n\n\n\n")
+                    if tag_key != correct_key:
+                        response = client.untag_resources(
+                            ResourceARNList=[resource_arn],
+                            TagKeys=[
+                                tag_key,
+                            ],
+                        )
+                        response = client.tag_resources(
+                            ResourceARNList=[resource_arn], Tags=new_tags
+                        )
