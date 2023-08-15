@@ -58,7 +58,7 @@ for account in accounts:
                     response = client.get_resources(
                         PaginationToken=pagination_token,
                         TagFilters=[],
-                        ResourcesPerPage=1,
+                        ResourcesPerPage=100,
                         IncludeComplianceDetails=True,
                         ExcludeCompliantResources=False,
                     )
