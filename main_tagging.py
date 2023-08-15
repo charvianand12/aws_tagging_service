@@ -23,7 +23,7 @@ master_account_id = organization_details["MasterAccountId"]
 for account in accounts:
     account_id = account["Id"]
     role_name = "admin_role"  # replace "admin_role" with your role_name
-    print("\nProcessing account:__________", account_id, "\n")
+    print("\n\nProcessing account: ", account_id, "\n")
     if len(accounts_id) == 0 or (len(accounts_id) > 0 and (account_id in accounts_id)):
         if account_id != master_account_id:
             access_key, secret_key, session_token = get_aws_credentials(
@@ -32,7 +32,7 @@ for account in accounts:
 
         # Iterate through each region
         for region in regions:
-            print("Processing region     ", region)
+            print("  Processing region: ", region)
             if account_id != master_account_id:
                 client = session.client(
                     "resourcegroupstaggingapi",
@@ -44,9 +44,9 @@ for account in accounts:
             else:
                 client = session.client("resourcegroupstaggingapi", region_name=region)
             response = client.get_resources(
-                # PaginationToken='string',
+                # PaginationToken='',
                 TagFilters=[],
-                # ResourcesPerPage=3,
+                # ResourcesPerPage=1,
                 # TagsPerPage=3,
                 # ResourceTypeFilters=[
                 #     resource_type,
@@ -57,19 +57,21 @@ for account in accounts:
                 #     'ec2','rds','s3'
                 # ]
             )
+            # paginator = client.get_paginator('get_resources')
+            # resources_iterator = paginator.paginate()
+            # for page in resources_iterator:
+                # resources = page["ResourceTagMappingList"]
             resources = response["ResourceTagMappingList"]
             for resource in resources:
                 resource_arn = resource["ResourceARN"]
                 resource_tags = resource["Tags"]
-                print(resource_arn)
                 for resource_tag in resource_tags:
-                    print("Processing resource     ", resource)
                     tag_key = resource_tag["Key"]
                     tag_value = resource_tag["Value"]
                     correct_key = validate_tag_key(tag_key)
                     correct_value = tag_value
                     new_tags = {correct_key: correct_value}
-                    print("old key : ", tag_key, "\n new tag:", new_tags, "\n\n\n\n")
+                    
                     if tag_key != correct_key:
                         response = client.untag_resources(
                             ResourceARNList=[resource_arn],
@@ -80,3 +82,6 @@ for account in accounts:
                         response = client.tag_resources(
                             ResourceARNList=[resource_arn], Tags=new_tags
                         )
+                        print("\n    Resource ARN:",resource_arn)
+                        print("\n    Old Key:",tag_key, "\n    New Tag:",new_tags,"\n")
+                        print("    tag modified\n\n")
