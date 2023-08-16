@@ -11,6 +11,17 @@ def get_logger():
     logger = logger_setup.setup_logger(log_filename)
     return logger
 
+def find_nested_value(dictionary, key):
+    if key in dictionary:
+        return dictionary[key]
+    for k, v in dictionary.items():
+        if isinstance(v, dict):
+            nested_value = find_nested_value(v, key)
+            if nested_value is not None:
+                return nested_value
+    return None
+
+
 def process_account_tags(master_account_id, accounts, session):
     # Iterate through each account
     for account in accounts:
@@ -81,14 +92,24 @@ def process_account_tags(master_account_id, accounts, session):
                                         )
                                     except Exception as exc:
                                         logger.info("Not able to untag Resource: %s", resource_arn)
+                                    status_code = find_nested_value(response,'StatusCode')
+                                    logger.info("status code is %s",status_code)
+                                    if status_code != 200 and status_code is not None:
+                                        logger.error("Not able to untag Resource: %s", resource_arn)
                                     try:
                                         response = client.tag_resources(
                                             ResourceARNList=[resource_arn], Tags=new_tags
                                         )
-                                        logger.info("\n Old Key: %s  Old Value: %s \n  New Tag: %s",tag_key,tag_value,new_tags)
-                                        logger.info("    tag modified\n\n")
                                     except Exception as exc:
                                         logger.info("Not able to tag Resource: %s", resource_arn)
+                                    status_code = find_nested_value(response,'StatusCode')
+                                    if status_code != 200 and status_code is not None:
+                                        logger.error("Not able to tag Resource: %s", resource_arn)
+                                    else:
+                                        logger.info("\n Old Key: %s  Old Value: %s \n  New Tag: %s",tag_key,tag_value,new_tags)
+                                        logger.info("    tag modified\n\n")
+
+                                    
                                     
 
 
