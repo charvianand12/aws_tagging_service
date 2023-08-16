@@ -114,8 +114,8 @@ if len(organizations) > 0:
         # Describe the OU to get its details
         ou_response = organizations_client.describe_organizational_unit(OrganizationalUnitId=ou_id)
 
-        # Extract the master account ID from the response
-        master_account_id = ou_response['OrganizationalUnit']['MasterAccountId']
+        # Extract the master account ID
+        master_account_id = ""
         process_account_tags(master_account_id, accounts, session)
 
 response = organizations_client.describe_organization()
@@ -124,7 +124,8 @@ organization_details = response["Organization"]
 # Retrieve accounts in your AWS organization
 response = organizations_client.list_accounts()
 accounts = response["Accounts"]
-master_account_id = organization_details["MasterAccountId"]
+# Extract the master account ID
+master_account_id = ""
 logger.info("Processing Organization %s", organization_details['Id'])
 process_account_tags(master_account_id, accounts, session)
 
