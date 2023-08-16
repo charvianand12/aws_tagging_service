@@ -57,29 +57,39 @@ def process_account_tags(master_account_id, accounts, session):
                         )
                         pagination_token=response["PaginationToken"]
                         resources_list = resources_list + (response["ResourceTagMappingList"])
+                    # To be added for Testing. Keep it empty list for production run
+                    resource_arn_list = []
                     for resource in resources_list:
                         resource_arn = resource["ResourceARN"]
-                        resource_tags = resource["Tags"]
-                        logger.info("\n Processing Resource: %s \n",resource_arn)
-                        for resource_tag in resource_tags:
-                            tag_key = resource_tag["Key"]
-                            tag_value = resource_tag["Value"]
-                            correct_key = validate_tag_key(tag_key, logger)
-                            correct_value = validate_tag_value(tag_value, correct_key, logger)
-                            new_tags = {correct_key: correct_value}
-                            
-                            if (tag_key != correct_key) or (tag_value != correct_value):
-                                response = client.untag_resources(
-                                    ResourceARNList=[resource_arn],
-                                    TagKeys=[
-                                        tag_key,
-                                    ],
-                                )
-                                response = client.tag_resources(
-                                    ResourceARNList=[resource_arn], Tags=new_tags
-                                )    
-                                logger.info("\n Old Key: %s  Old Value: %s \n  New Tag: %s",tag_key,tag_value,new_tags)
-                                logger.info("    tag modified\n\n")
+                        if len(resource_arn_list) == 0 or (len(resource_arn_list) > 0 and (resource_arn in resource_arn_list)):
+                            resource_tags = resource["Tags"]
+                            logger.info("\n Processing Resource: %s \n",resource_arn)
+                            for resource_tag in resource_tags:
+                                tag_key = resource_tag["Key"]
+                                tag_value = resource_tag["Value"]
+                                correct_key = validate_tag_key(tag_key, logger)
+                                correct_value = validate_tag_value(tag_value, correct_key, logger)
+                                new_tags = {correct_key: correct_value}
+                                
+                                if (tag_key != correct_key) or (tag_value != correct_value):
+                                    try:
+                                        response = client.untag_resources(
+                                            ResourceARNList=[resource_arn],
+                                            TagKeys=[
+                                                tag_key,
+                                            ],
+                                        )
+                                    except Exception as exc:
+                                        logger.error("Not able to untag Resource: %s", resource_arn)
+                                    try:
+                                        response = client.tag_resources(
+                                            ResourceARNList=[resource_arn], Tags=new_tags
+                                        )
+                                    except Exception as exc:
+                                        logger.error("Not able to tag Resource: %s", resource_arn)
+                                    
+                                    logger.info("\n Old Key: %s  Old Value: %s \n  New Tag: %s",tag_key,tag_value,new_tags)
+                                    logger.info("    tag modified\n\n")
 
 accounts_id = []
 regions = ["us-west-2", "us-west-1", "us-east-2", "us-east-1"]
