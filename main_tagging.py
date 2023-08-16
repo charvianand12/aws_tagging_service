@@ -80,16 +80,17 @@ def process_account_tags(master_account_id, accounts, session):
                                             ],
                                         )
                                     except Exception as exc:
-                                        logger.error("Not able to untag Resource: %s", resource_arn)
+                                        logger.info("Not able to untag Resource: %s", resource_arn)
                                     try:
                                         response = client.tag_resources(
                                             ResourceARNList=[resource_arn], Tags=new_tags
                                         )
+                                        logger.info("\n Old Key: %s  Old Value: %s \n  New Tag: %s",tag_key,tag_value,new_tags)
+                                        logger.info("    tag modified\n\n")
                                     except Exception as exc:
-                                        logger.error("Not able to tag Resource: %s", resource_arn)
+                                        logger.info("Not able to tag Resource: %s", resource_arn)
                                     
-                                    logger.info("\n Old Key: %s  Old Value: %s \n  New Tag: %s",tag_key,tag_value,new_tags)
-                                    logger.info("    tag modified\n\n")
+
 
 accounts_id = []
 regions = ["us-west-2", "us-west-1", "us-east-2", "us-east-1"]
