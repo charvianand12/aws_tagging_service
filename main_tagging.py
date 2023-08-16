@@ -6,6 +6,10 @@ import logger_setup
 
 load_dotenv()
 
+def get_logger():
+    log_filename = "output.log"
+    logger = logger_setup.setup_logger(log_filename)
+    return logger
 
 def process_account_tags(master_account_id, accounts, session):
     # Iterate through each account
@@ -21,7 +25,7 @@ def process_account_tags(master_account_id, accounts, session):
 
             # Iterate through each region
             for region in regions:
-                logger.info(" Processing region: %s", region)
+                logger.info("\n Processing region: %s", region)
                 if account_id != master_account_id:
                     client = session.client(
                         "resourcegroupstaggingapi",
@@ -56,11 +60,12 @@ def process_account_tags(master_account_id, accounts, session):
                     for resource in resources_list:
                         resource_arn = resource["ResourceARN"]
                         resource_tags = resource["Tags"]
+                        logger.info("\n Processing Resource: %s \n",resource_arn)
                         for resource_tag in resource_tags:
                             tag_key = resource_tag["Key"]
                             tag_value = resource_tag["Value"]
-                            correct_key = validate_tag_key(tag_key)
-                            correct_value = validate_tag_value(tag_value, correct_key)
+                            correct_key = validate_tag_key(tag_key, logger)
+                            correct_value = validate_tag_value(tag_value, correct_key, logger)
                             new_tags = {correct_key: correct_value}
                             
                             if (tag_key != correct_key) or (tag_value != correct_value):
@@ -73,10 +78,8 @@ def process_account_tags(master_account_id, accounts, session):
                                 response = client.tag_resources(
                                     ResourceARNList=[resource_arn], Tags=new_tags
                                 )    
-                                logger.info("\n    Resource ARN: %s",resource_arn)
-                                logger.info("\n    Old Key: %s      Old Value:%s \n    New Tag:%s",tag_key,tag_value,new_tags,"\n")
+                                logger.info("\n Old Key: %s  Old Value: %s \n  New Tag: %s",tag_key,tag_value,new_tags)
                                 logger.info("    tag modified\n\n")
-                                logger.info("new_tags") and open("output.txt", "a").write("new_tags")
 
 accounts_id = []
 regions = ["us-west-2", "us-west-1", "us-east-2", "us-east-1"]
@@ -87,10 +90,8 @@ organizations_client = session.client("organizations")
 organization_parent_id = 'r-18jb'
 response = organizations_client.list_organizational_units_for_parent(ParentId=organization_parent_id)
 organizations = response['OrganizationalUnits']
+logger = get_logger()
 
-# logger setup
-log_filename = "output.log"
-logger = logger_setup.setup_logger(log_filename)
 
 if len(organizations) > 0:
     for organization in organizations:
