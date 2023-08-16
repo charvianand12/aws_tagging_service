@@ -4,6 +4,13 @@ from rapidfuzz import fuzz, process
 # from spellchecker import SpellChecker
 from valid_keys import valid_keys
 
+def check_value(best_match_value,fetched_value):
+    if int(best_match_value[1])>= 85:
+        return (best_match_value[0])
+    else:
+        return (fetched_value)
+
+
 def check_spelling(input_item):
     
     # corrected_words = []
@@ -88,16 +95,24 @@ def validate_tag_value(tag_value,tag_key):
         fetched_value = fetched_value.lower()
         if tag_key == "trhc:criticality":
             best_match = list(process.extractOne(fetched_value, criticality_list, scorer=fuzz.ratio))
-            correct_value = best_match[0]
+            correct_value = check_value(best_match,fetched_value)
+
  
         elif tag_key == "trhc:idle-shutdown":
             best_match = list(process.extractOne(fetched_value, idle_list, scorer=fuzz.ratio))
-            correct_value = best_match[0]
+            correct_value = check_value(best_match,fetched_value)
+            
 
         elif tag_key == "trhc:stage":
-            best_match = list(process.extractOne(fetched_value, stage_list, scorer=fuzz.ratio))
-            correct_value = best_match[0]
-
+            if (fetched_value == "prod"):
+                correct_value = "production"
+            elif (fetched_value == "pre prod") or (fetched_value == "pre-prod") or (fetched_value == "preprod"):
+                correct_value = "pre-production"
+            elif (fetched_value == "dev"):
+                correct_value = "development"
+            else:
+                best_match = list(process.extractOne(fetched_value, stage_list, scorer=fuzz.ratio))
+                correct_value = check_value(best_match,fetched_value)
         else:
             correct_value = fetched_value.lower()
             

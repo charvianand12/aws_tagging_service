@@ -2,13 +2,14 @@ from rapidfuzz import fuzz, process
 # from textblob import TextBlob
 # from spellchecker import SpellChecker
 from valid_keys import valid_keys
-
+import helpers
 
 def check_spelling(input_item):
+    logger = helpers.get_logger()
     corrected_words = []
 
     best_match = list(process.extractOne(input_item, valid_keys, scorer=fuzz.ratio))
-    print(best_match)
+    logger.info("Percentag Match: %s", best_match)
     match_string = None
     if int(best_match[1]) >= 79:
         match_string = best_match[0]
@@ -31,10 +32,10 @@ def check_spelling(input_item):
         # # corrected_words = [spell.correction(word) if spell.unknown([word]) else word for word in words]
         # corrected_text = '-'.join(corrected_words)
 
-        # print("Original Text:", text)
-        # print("Corrected Text:", corrected_text)
+        # logger.info("Original Text:", text)
+        # logger.info("Corrected Text:", corrected_text)
 
         match_string = text
 
-    # print(best_match[1])
+    # logger.info(best_match[1])
     return match_string

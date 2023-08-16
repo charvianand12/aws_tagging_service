@@ -2,6 +2,7 @@ import boto3
 from credentials import get_aws_credentials
 from dotenv import load_dotenv
 from validations import validate_tag_key, validate_tag_value
+import logger_setup
 
 load_dotenv()
 
@@ -11,7 +12,7 @@ def process_account_tags(master_account_id, accounts, session):
     for account in accounts:
         account_id = account["Id"]
         role_name = "admin_role"  # replace "admin_role" with your role_name
-        print("\n\nProcessing account: ", account_id, "\n")
+        logger.info("\n\nProcessing account: %s \n", account_id )
         if len(accounts_id) == 0 or (len(accounts_id) > 0 and (account_id in accounts_id)):
             if account_id != master_account_id:
                 access_key, secret_key, session_token = get_aws_credentials(
@@ -20,7 +21,7 @@ def process_account_tags(master_account_id, accounts, session):
 
             # Iterate through each region
             for region in regions:
-                print("  Processing region: ", region)
+                logger.info(" Processing region: %s", region)
                 if account_id != master_account_id:
                     client = session.client(
                         "resourcegroupstaggingapi",
@@ -71,11 +72,11 @@ def process_account_tags(master_account_id, accounts, session):
                                 )
                                 response = client.tag_resources(
                                     ResourceARNList=[resource_arn], Tags=new_tags
-                                )
-                                print("\n    Resource ARN:",resource_arn)
-                                print("\n    Old Key:",tag_key,"     Old Value:",tag_value, "\n    New Tag:",new_tags,"\n")
-                                print("    tag modified\n\n")
-
+                                )    
+                                logger.info("\n    Resource ARN: %s",resource_arn)
+                                logger.info("\n    Old Key: %s      Old Value:%s \n    New Tag:%s",tag_key,tag_value,new_tags,"\n")
+                                logger.info("    tag modified\n\n")
+                                logger.info("new_tags") and open("output.txt", "a").write("new_tags")
 
 accounts_id = []
 regions = ["us-west-2", "us-west-1", "us-east-2", "us-east-1"]
@@ -83,14 +84,18 @@ session = boto3.Session(region_name="us-east-2")
 organizations_client = session.client("organizations")
 
 # to be added
-organization_parent_id = ''
+organization_parent_id = 'r-18jb'
 response = organizations_client.list_organizational_units_for_parent(ParentId=organization_parent_id)
 organizations = response['OrganizationalUnits']
+
+# logger setup
+log_filename = "output.log"
+logger = logger_setup.setup_logger(log_filename)
 
 if len(organizations) > 0:
     for organization in organizations:
         ou_id = organization['Id']
-        print(f"Processing Organization: {ou_id}")
+        logger.info("Processing Organization: %s", ou_id)
 
         response = organizations_client.list_accounts_for_parent(ParentId=ou_id)
         accounts = response['Accounts']
@@ -109,6 +114,6 @@ organization_details = response["Organization"]
 response = organizations_client.list_accounts()
 accounts = response["Accounts"]
 master_account_id = organization_details["MasterAccountId"]
-print(f"Processing Organization: {organization_details['Id']}")
+logger.info("Processing Organization %s", organization_details['Id'])
 process_account_tags(master_account_id, accounts, session)
 
