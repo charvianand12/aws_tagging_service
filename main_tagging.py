@@ -14,6 +14,9 @@ def get_logger():
     return logger
 
 def modify_tags():
+    '''
+    Works on the csv file and iterates over each row to make tag changes
+    '''
     # Enter Master Account id
     role_name = "admin_role"
     print(master_account_id)
@@ -65,6 +68,9 @@ def modify_tags():
 
 
 def append_data_csv_file(tag_list):
+    '''
+    Updates Csv file with the proposed tag changes
+    '''
     # Specify the file name
     file_name = "tag_changes.csv"
 
@@ -76,6 +82,9 @@ def append_data_csv_file(tag_list):
     
     
 def process_account_tags(master_account_id, accounts, ou_id, tags_list, session):
+    '''
+    Processes the Account to find the tag changes and returns the list of the changes as list for  input to append_data_csv_file function
+    '''
     # Iterate through each account
     for account in accounts:
         account_id = account["Id"]
